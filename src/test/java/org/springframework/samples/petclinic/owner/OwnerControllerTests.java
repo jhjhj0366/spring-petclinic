@@ -28,10 +28,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.samples.petclinic.visit.Visit;
 import org.springframework.samples.petclinic.visit.VisitRepository;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
@@ -64,6 +66,15 @@ class OwnerControllerTests {
 
     private Owner george;
 
+    @Autowired
+    ApplicationContext applicationContext;
+
+    @Test
+    public void getBean(){
+        OwnerController bean = applicationContext.getBean(OwnerController.class);
+        assertThat(bean);
+    }
+
     @BeforeEach
     void setup() {
         george = new Owner();
@@ -73,6 +84,7 @@ class OwnerControllerTests {
         george.setAddress("110 W. Liberty St.");
         george.setCity("Madison");
         george.setTelephone("6085551023");
+        george.setAge("28");
         Pet max = new Pet();
         PetType dog = new PetType();
         dog.setName("dog");
@@ -103,6 +115,7 @@ class OwnerControllerTests {
             .param("address", "123 Caramel Street")
             .param("city", "London")
             .param("telephone", "01316761638")
+            .param("age", "28")
         )
             .andExpect(status().is3xxRedirection());
     }
@@ -113,6 +126,7 @@ class OwnerControllerTests {
             .param("firstName", "Joe")
             .param("lastName", "Bloggs")
             .param("city", "London")
+            .param("age", "28")
         )
             .andExpect(status().isOk())
             .andExpect(model().attributeHasErrors("owner"))
@@ -129,32 +143,44 @@ class OwnerControllerTests {
             .andExpect(view().name("owners/findOwners"));
     }
 
-    @Test
-    void testProcessFindFormSuccess() throws Exception {
-        given(this.owners.findByLastName("")).willReturn(Lists.newArrayList(george, new Owner()));
-        mockMvc.perform(get("/owners"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("owners/ownersList"));
-    }
+//    @Test
+//    void testProcessFindFormSuccess() throws Exception {
+//        given(this.owners.findByLastName("")).willReturn(Lists.newArrayList(george, new Owner()));
+//        mockMvc.perform(get("/owners"))
+//            .andExpect(status().isOk())
+//            .andExpect(view().name("owners/ownersList"));
+//    }
 
     @Test
-    void testProcessFindFormByLastName() throws Exception {
-        given(this.owners.findByLastName(george.getLastName())).willReturn(Lists.newArrayList(george));
+    void testProcessFindFormByFirstName() throws Exception {
+        given(this.owners.findByFirstName(george.getFirstName())).willReturn(Lists.newArrayList(george));
         mockMvc.perform(get("/owners")
-            .param("lastName", "Franklin")
+            .param("firstName", "George")
         )
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
     }
 
+//    @Test
+//    void testProcessFindFormNoOwnersFound() throws Exception {
+//        mockMvc.perform(get("/owners")
+//            .param("lastName", "Unknown Surname")
+//        )
+//            .andExpect(status().isOk())
+//            .andExpect(model().attributeHasFieldErrors("owner", "lastName"))
+//            .andExpect(model().attributeHasFieldErrorCode("owner", "lastName", "notFound"))
+//            .andExpect(view().name("owners/findOwners"));
+//    }
+
+
     @Test
     void testProcessFindFormNoOwnersFound() throws Exception {
         mockMvc.perform(get("/owners")
-            .param("lastName", "Unknown Surname")
+            .param("firstName", "Unknown Surname")
         )
             .andExpect(status().isOk())
-            .andExpect(model().attributeHasFieldErrors("owner", "lastName"))
-            .andExpect(model().attributeHasFieldErrorCode("owner", "lastName", "notFound"))
+            .andExpect(model().attributeHasFieldErrors("owner", "firstName"))
+            .andExpect(model().attributeHasFieldErrorCode("owner", "firstName", "notFound"))
             .andExpect(view().name("owners/findOwners"));
     }
 
@@ -168,6 +194,7 @@ class OwnerControllerTests {
             .andExpect(model().attribute("owner", hasProperty("address", is("110 W. Liberty St."))))
             .andExpect(model().attribute("owner", hasProperty("city", is("Madison"))))
             .andExpect(model().attribute("owner", hasProperty("telephone", is("6085551023"))))
+            .andExpect(model().attribute("owner", hasProperty("age", is("28"))))
             .andExpect(view().name("owners/createOrUpdateOwnerForm"));
     }
 
@@ -179,6 +206,8 @@ class OwnerControllerTests {
             .param("address", "123 Caramel Street")
             .param("city", "London")
             .param("telephone", "01616291589")
+            .param("age", "28")
+
         )
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/{ownerId}"));

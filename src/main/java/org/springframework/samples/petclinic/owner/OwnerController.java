@@ -15,15 +15,14 @@
  */
 package org.springframework.samples.petclinic.owner;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.samples.petclinic.visit.VisitRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
@@ -41,13 +40,30 @@ class OwnerController {
 
     private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
     private final OwnerRepository owners;
+
+    @Autowired
+    private PetRepository petRepository;
+
     private VisitRepository visits;
 
+//    private final ApplicationContext applicationContext;
 
     public OwnerController(OwnerRepository clinicService, VisitRepository visits) {
         this.owners = clinicService;
         this.visits = visits;
     }
+
+//    public OwnerController(OwnerRepository clinicService, ApplicationContext applicationContext) {
+//        this.owners = clinicService;
+//        this.applicationContext = applicationContext;
+//    }
+
+//    @GetMapping("/bean")
+//    @ResponseBody
+//    public String bean(){
+//        return "bean : " + applicationContext.getBean(OwnerRepository.class) + "\n"
+//                        + "owners : " + this.owners;
+//    }
 
     @InitBinder
     public void setAllowedFields(WebDataBinder dataBinder) {
@@ -81,15 +97,15 @@ class OwnerController {
     public String processFindForm(Owner owner, BindingResult result, Map<String, Object> model) {
 
         // allow parameterless GET request for /owners to return all records
-        if (owner.getLastName() == null) {
-            owner.setLastName(""); // empty string signifies broadest possible search
+        if (owner.getFirstName() == null) {
+            owner.setFirstName(""); // empty string signifies broadest possible search
         }
 
         // find owners by last name
-        Collection<Owner> results = this.owners.findByLastName(owner.getLastName());
+        Collection<Owner> results = this.owners.findByFirstName(owner.getFirstName());      //과제 : firstName으로 찾기
         if (results.isEmpty()) {
             // no owners found
-            result.rejectValue("lastName", "notFound", "not found");
+            result.rejectValue("firstName", "notFound", "not found");
             return "owners/findOwners";
         } else if (results.size() == 1) {
             // 1 owner found
